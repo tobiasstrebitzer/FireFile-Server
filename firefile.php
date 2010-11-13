@@ -1,6 +1,6 @@
-<?php #0.5.0
+<?php #0.8.3
 global $version;
-$version = "0.5.0";
+$version = "0.8.3";
 
 // GET OS SETTINGS
 if(isset($_SERVER["OS"]) && substr($_SERVER["OS"], 0, 3) == "win") {
