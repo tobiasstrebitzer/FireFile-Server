@@ -429,7 +429,7 @@ function printTemplate($data) {
 			</style>
 
 			<?php if(file_exists("style1.css") && file_exists("style2.css")) { ?>
-				<link rel="stylesheet" href="style1.css" type="text/css" />
+				<link rel="stylesheet" href="style1.css?fodsaj" type="text/css" />
 				<link rel="stylesheet" href="style2.css" type="text/css" />
 			<?php } ?>
 		</head>
