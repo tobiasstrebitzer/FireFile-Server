@@ -1,6 +1,6 @@
-<?php #0.8.3
+<?php #0.9.0
 global $version;
-$version = "0.8.3";
+$version = "0.9.0";
 
 // GET OS SETTINGS
 if(isset($_SERVER["OS"]) && substr($_SERVER["OS"], 0, 3) == "win") {
@@ -26,7 +26,7 @@ if($_POST && isset($_POST["action"])) {
 			if($result == "success") {
 				$result = onActionSaveRoutine();
 			}
-		    
+
 		    // HANDLE RESULT
 		    $response = getResponse($result);
 			echo "<?xml version='1.0' encoding='ISO-8859-1'?>";
@@ -46,15 +46,15 @@ function authorizeAction() {
 
 	// CHECK FILENAME
 	if(!getPost("file")) { return "no_file_specified"; }
-	if(substr(base64_decode(getPost("file")), -4) != ".css") { return "invalid_file_extension"; }
-	
+	if(substr(getPost64("file"), -4) != ".css") { return "invalid_file_extension"; }
+
 	// CHECK STYLESHEET DATA
 	if(!getPost("stylesheet")) { return "no_stylesheet_attached"; }
 	if(strlen(getPost("stylesheet")) < 10 ) { return "stylesheet_too_short"; }
-	
+
 	// CKECK CODE
 	if(getPost("code") != md5(getConfigValue("user")."/".getConfigValue("pass"))) { return "invalid_code"; }
-		
+
 	return "success";
 }
 
@@ -63,7 +63,7 @@ function getConfigValue($key) {
 	if(!file_exists("config.php")) {
 		createConfigFile();
 	}
-	
+
 	$contents = file_get_contents("config.php");
 	preg_match("/\n".$key."=([^\n]+)/", $contents, $match);
 	if(count($match) < 2) {
@@ -71,7 +71,7 @@ function getConfigValue($key) {
 	}else{
 		return $match[1];
 	}
-	
+
 }
 
 function createConfigFile() {
@@ -83,13 +83,13 @@ function createConfigFile() {
 function setConfigValue($key, $value) {
 	$contents = file_get_contents("config.php");
 	preg_match("/\n".$key."=([^\n]*)/", $contents, $match);
-	
+
 	if(!$match) {
 		createConfigFile();
 		$contents = file_get_contents("config.php");
 		preg_match("/\n".$key."=([^\n]*)/", $contents, $match);
 	}
-	
+
 	$contents = str_replace($match[0], "\n$key=$value", $contents);
 	saveFile("config.php", $contents);
 	return true;
@@ -102,14 +102,14 @@ function onConfigViewRoutine() {
 	$data["code"] = "";
 	$data["user_set"] = true;
 	$data["pass_set"] = true;
-	
+
 	// IS LOGGED IN
 	if(getPost("username") == getConfigValue("user") && getPost("password") == getConfigValue("pass")) {
 		handlePostData($data);
 	}else{
 		$data["logged_in"] = false;
 	}
-	
+
 	echo printTemplate($data);
 	return true;
 }
@@ -118,17 +118,17 @@ function checkPermissions() {
 	$break = false;
 	$data = array();
 	$data["error"] = array();
-	
-	if(!is_writable(".")) {		
+
+	if(!is_writable(".")) {
 		$data["error"][] = "DIRECTORY '.' IS NOT WRITABLE!<div class='code'>set directory permissions to '777'<br />chmod -R 777 ".getcwd()."</div>";
 		$break = true;
 	}
-	
+
 	if(file_exists("config.php") && !is_writable("config.php")) {
 		$data["error"][] = "FILE 'config.php' IS NOT WRITABLE!<div class='code'>set file permissions to '666'<br />chmod 666 ".getcwd()."/config.php</div>";
 		$break = true;
 	}
-	
+
 	if($break) {
 		$data["logged_in"] = false;
 		$data["code"] = "";
@@ -143,10 +143,10 @@ function checkPermissions() {
 
 
 function handlePostData(&$data) {
-	
-	
+
+
 	if(getPost("username_new")) {
-		
+
 		if(strlen(getPost("username_new")) >= 4) {
 			setConfigValue("user", getPost("username_new"));
 			$_POST["username"] = getPost("username_new");
@@ -157,7 +157,7 @@ function handlePostData(&$data) {
 		}
 
 	}
-	
+
 	if(getPost("password_new") || getPost("password_new_retype")) {
 		if(getPost("password_new") == getPost("password_new_retype")) {
 			setConfigValue("pass", getPost("password_new"));
@@ -168,30 +168,30 @@ function handlePostData(&$data) {
 			$data["error"][] = "Passwords do not match!";
 		}
 	}
-	
+
 	if(!getConfigValue("user")) {
 		$data["user_set"] = false;
 	}
-	
+
 	if(!getConfigValue("pass")) {
 		$data["pass_set"] = false;
 	}
-		
+
 	$data["code"] = md5(getConfigValue("user")."/".getConfigValue("pass"));
 	$data["logged_in"] = true;
-	
+
 	if($data["user_set"] && $data["pass_set"] && $data["logged_in"]) {
 		createDemoContent();
 	}
-	
+
 	return true;
 }
 
 function onActionSaveRoutine() {
 
 	// DECODE
-	$stylesheet = base64_decode(getPost("stylesheet"));
-	$file = base64_decode(getPost("file"));
+	$stylesheet = getPost64("stylesheet");
+	$file = getPost64("file");
 
 	// SAVE FILE
 	if(OS == "UNIX") {
@@ -203,7 +203,7 @@ function onActionSaveRoutine() {
 	}
 
 	$result = saveFile($file_abs_path, $stylesheet);
-	
+
 	return $result;
 }
 
@@ -224,12 +224,18 @@ function getPost($var) {
 	}
 }
 
+function getPost64($param) {
+    if(isset($_POST[$param])) {
+        return urldecode(base64_decode($_POST[$param]));
+    }
+}
+
 function createDemoContent() {
 	if(!file_exists("style1.css")) {
 		$style1 = "body {margin:0;padding:0;}div.outer_div {-moz-background-clip:border;-moz-background-inline-policy:continuous;-moz-background-origin:padding;background:#EEEEEE none repeat scroll 0 0;border:1px solid #CCCCCC;margin:4px;padding:2px;}div.inner_div {-moz-background-clip:border;-moz-background-inline-policy:continuous;-moz-background-origin:padding;background:#F2F2F2 none repeat scroll 0 0;border:1px solid #CCCCCC;margin:2px;padding:4px;}";
 		saveFile("style1.css", $style1, true);
 	}
-	
+
 	if(!file_exists("style2.css")) {
 		$style2 = "div.header_div {border-bottom:1px dotted #CCCCCC;color:#444444;font-size:12px;font-weight:bold;padding:2px 4px 0;}div.content_div {-moz-background-clip:border;-moz-background-inline-policy:continuous;-moz-background-origin:padding;background:#F6F6F6 none repeat scroll 0 0;font-size:11px;padding:4px;text-align:center;}div.footer_div {border-top:1px dotted #CCCCCC;color:#CCCCCC;font-size:12px;padding:4px 4px 0;text-align:right;}";
 		saveFile("style2.css", $style2, true);
@@ -238,7 +244,7 @@ function createDemoContent() {
 
 function getResponse($result) {
     $index = getPost("index");
-    
+
     switch($result) {
         case "success":
             return "<firefilestatus success='true' msg='FilesSuccessfullySaved' styleindex='$index' />";
@@ -255,35 +261,35 @@ function endError() {
     return $retVal;
 }
 
-function printTemplate($data) { 
+function printTemplate($data) {
     global $version; ?>
 	<html>
 		<head>
 			<title>FireFile Configuration</title>
-			<link rel="shortcut icon" href="http://www.strebitzer.at/projects/firefile/favicon.ico" type="image/x-icon" />
+			<link rel="shortcut icon" href="http://www.firefile.at/favicon.ico" type="image/x-icon" />
 			<style>
-				
+
 				body {
 					padding: 0px;
 					margin: 0px;
 					background: #FFFFFF;
 					color: #444444;
 				}
-				
+
 				div.config-pane {
 					margin: 2px;
 					padding: 2px;
 					border: 1px dotted #DDDDDD;
 				}
-				
+
 				div.success {
 					background: #DDEEDD;
 				}
-				
+
 				div.error {
 					background: #EEDDDD;
 				}
-				
+
 				div.code {
 					border: 1px dotted #CCCCCC;
 					background: #FFEEEE;
@@ -292,7 +298,7 @@ function printTemplate($data) {
 					font-size: 11px;
 					color: #444444;
 				}
-				
+
 				div.success h1, div.error h1 {
 					color: #444444 !IMPORTANT;
 					font-size: 12px;
@@ -307,35 +313,35 @@ function printTemplate($data) {
 					padding: 4px 0px 4px 0px;
 					border-bottom: 2px solid #DDDDDD;
 				}
-				
+
 				div.login-control {
 					float: right;
 					padding: 2px 2px 2px 6px;
 					margin: 3px 3px 3px 0px;
 					border: 1px dotted #CCCCCC;
 				}
-				
+
 				input {
 					border: 1px solid #444444;
 					height: 18px;
 				}
-				
+
 				label {
 					color: #444444;
 					font-size: 10px;
 					line-height: 18px;
 				}
-				
+
 				div.config-pane label {
 					display: block;
 					line-height: 13px;
 				}
-				
+
 				div.config-pane input {
 					display: block;
 
 				}
-				
+
 				h1 {
 					margin: 6px 0px 4px 4px;
 					padding: 0px;
@@ -344,7 +350,7 @@ function printTemplate($data) {
 					color: #AAAAAA;
 					font-weight: normal;
 				}
-				
+
 				input#cmd_submit {
 					float: right;
 					margin: 3px 3px 3px 0px;
@@ -353,7 +359,7 @@ function printTemplate($data) {
 					color: #444444;
 					font-weight: bold;
 				}
-				
+
 				input.inner_submit {
 					margin: 2px 0px 0px 0px;
 					float: none;
@@ -362,32 +368,32 @@ function printTemplate($data) {
 					color: #444444;
 					font-weight: bold;
 				}
-				
+
 				input.highlight {
 					background: #FFCB51;
 					border: 1px solid #99882B;
 				}
-				
+
 				span.firefile-key {
 					border: 1px solid #CCCCCC;
 					padding: 2px 4px 0px 4px;
 					text-transform: uppercase;
 					background: #EEEEEE;
 				}
-				
+
 				span.firefile-install {
 					border: 1px solid #CCCCCC;
 					padding: 2px 4px 0px 4px;
 					text-transform: uppercase;
 					background: #EEEEEE;
 				}
-				
+
 				span.firefile-install a {
 					color: #444444;
 					font-weight: bold;
 					text-decoration: none;
 				}
-				
+
 				div.logo-float {
 					float: left;
 					padding: 0px 0px 0px 4px;
@@ -395,33 +401,33 @@ function printTemplate($data) {
 					line-height: 40px;
 					font-weight: bold;
 				}
-				
+
 				div.logo-float img {
 				    border: 0 none;
 					float: left;
 				}
-				
+
 				div.logo-float span.logo-fire {
 					float: left;
 				}
-				
+
 				div.logo-float span.logo-file {
 					float: left;
 					color: #666666;
 				}
-				
+
 				div.logo-float span.logo-version {
 					float: left;
 					color: #EAEAEA;
 					margin-left: 10px;
 				}
-				
+
 				div#key-pane {
 				    display: none;
 				}
-				
+
 			</style>
-			
+
 			<?php if(file_exists("style1.css") && file_exists("style2.css")) { ?>
 				<link rel="stylesheet" href="style1.css" type="text/css" />
 				<link rel="stylesheet" href="style2.css" type="text/css" />
@@ -431,10 +437,10 @@ function printTemplate($data) {
 			<form id="firefile-form" method="POST">
 				<div id="login-panel">
 					<div class="logo-float">
-						<a href="http://firefile.strebitzer.at/?hasversion=<?php echo $version; ?>" target="_blank"><img src="http://www.strebitzer.at/projects/firefile/firefile_update_icon.php?version=<?php echo $version; ?>" width="32" height="32" alt="FireFile" title="FireFile" /></a>
+						<a href="http://www.firefile.at/version/<?php echo $version; ?>" target="_blank"><img src="http://www.firefile.at/version/<?php echo $version; ?>.png" width="32" height="32" alt="FireFile" title="FireFile" /></a>
 						<span class="logo-fire">Fire</span>
 						<span class="logo-file">File</span>
-						<span class="logo-version">0.5.0</span>
+						<span class="logo-version">0.9.0</span>
 					</div>
 					<?php if($data["user_set"] || $data["pass_set"]){ ?>
 						<input id="cmd_submit" type="submit" value="APPLY" />
@@ -453,18 +459,18 @@ function printTemplate($data) {
 						<h1><?php echo $msg ?></h1>
 					</div>
 				<?php } ?>
-				
+
 				<?php foreach($data["error"] as $msg) { ?>
 					<div class="config-pane error">
 						<h1><?php echo $msg ?></h1>
 					</div>
 				<?php } ?>
-				
+
 				<?php if($data["logged_in"]) { ?>
     				<div class="config-pane success">
     					<h1>Please make sure that Firebug ist activated to successfully register FireFile</h1>
     				</div>
-    				
+
 					<div class="config-pane">
 						<h1>CHANGE USERNAME:</h1>
 						<div class="config-pane">
