@@ -403,7 +403,7 @@ class FireFileBase {
                             <div class="span4">
                                 <h2>Get started</h2>
                                 <p>You only need to sign up and install FireFile for your browser to get started in just a minutes.</p>
-                                <p><a href="/register/" class="btn btn-large btn-primary">Sign up now</a></p>
+                                <p><a href="http://www.firefile.at/register/" class="btn btn-large btn-primary">Sign up now</a></p>
                             </div>
                             <div class="span4">
                                 <h2>Cross-browser</h2>
