@@ -2,7 +2,7 @@
     
 class FireFileBase {
     
-    public $version = "0.9.3";
+    public $version = "0.9.4";
     public $OS = "UNIX";
     public $SL = "/";
     
