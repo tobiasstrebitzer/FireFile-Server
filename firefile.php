@@ -2,7 +2,7 @@
     
 class FireFileBase {
     
-    public $version = "0.9.4";
+    public $version = "0.9.3";
     public $OS = "UNIX";
     public $SL = "/";
     
@@ -218,7 +218,7 @@ class FireFileBase {
         	$cssContents = file_get_contents("http://www.firefile.at/bundles/firefileserver/css/firefile.demo.css");
         	return $this->saveFile("firefile.demo.css", $cssContents, true);
         }
-        return false;
+        return true;
     }
     
     private function saveFile($file, $contents, $force=false) {
