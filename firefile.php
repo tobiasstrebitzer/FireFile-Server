@@ -84,7 +84,11 @@ class FireFileBase {
 
                 if($this->isUserSet() && $this->isPassSet()) {
                     $this->code = $this->generateCode();
-                    $this->createDemoContent();
+                    $result = $this->createDemoContent();
+                    if($result === false) {
+                        $fileperms = substr(sprintf('%o', fileperms('.')), -3);
+                        $this->addError("The file 'firefile.demo.css' is not writable. FireFile directory needs write permissions (currently: $fileperms)");
+                    }
                 }
             }
 
@@ -212,13 +216,17 @@ class FireFileBase {
     private function createDemoContent() {
         if(!file_exists("firefile.demo.css")) {
         	$cssContents = file_get_contents("http://www.firefile.at/bundles/firefileserver/css/firefile.demo.css");
-        	$this->saveFile("firefile.demo.css", $cssContents, true);
+        	return $this->saveFile("firefile.demo.css", $cssContents, true);
         }
+        return false;
     }
     
     private function saveFile($file, $contents, $force=false) {
     	if(file_exists($file) || $force) {
-    		$handle = @fopen($file, 'w') or die(endError());
+    		$handle = @fopen($file, 'w');
+            if($handle === false) {
+                return false;
+            }
     		fwrite($handle, $contents);
     		fclose($handle);
     		return true;
@@ -312,10 +320,6 @@ class FireFileBase {
         		<?php } ?>
         
                 <link rel="shortcut icon" href="http://www.firefile.at/favicon.ico" type="image/x-icon" />
-                <!--
-                <link href="http://dev.firefile.ts/user/bimf/test.css" type="text/css" rel="stylesheet" />
-                <link href="http://dev.firefile.ts/user/bimf/firefile.css" type="text/css" rel="stylesheet" />
-                -->
         	</head>
         	<body onload="window.setInterval(detectFirebug, 500);detectFirebug();">
         

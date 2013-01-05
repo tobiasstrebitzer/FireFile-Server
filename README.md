@@ -14,6 +14,9 @@ FireFile remembers all modifications done to a website (all modified css files) 
 
 ## Version History
 
+* 0.9.4 (05.01.2013)
+** Fixed error-handling bug
+
 * 0.9.3 (31.12.2012)
 ** Integrated CssMin PHP Library (http://code.google.com/p/cssmin/) for improved CSS parsing
 
